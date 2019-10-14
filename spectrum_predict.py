@@ -1,9 +1,12 @@
 import numpy as np
+import random
 from scipy.io import wavfile
 from scipy.fftpack import fft
 from bokeh.io import curdoc
 from bokeh.layouts import row, column, gridplot
 from bokeh.models import ColumnDataSource, Slider, Select
+from bokeh.models.glyphs import Text
+from bokeh.models.widgets import Slider, TextInput
 from bokeh.plotting import curdoc, figure
 
 
@@ -49,8 +52,19 @@ def create_signal_fft(signal):
 
 
 def get_current_status():
-    return None
+    # Random Data for now
 
+    # List of some real and some generated call signs
+    ls_of_conv_callsigns = ['k5xrs','ki5ddl','k5gnu','k5pi','ae1x','n5nm','k5aes','k3nem']
+    x_data = []
+    y_data = []
+    text_data = []
+    for conversation_freq in range(0,50):
+        x_data.append(conversation_freq)
+        y_data.append(np.random.rand())
+        text_data.append(random.choice(ls_of_conv_callsigns))
+
+    return dict(x=x_data, y=y_data, text=text_data)
 
 """
 Plot Generation
@@ -71,31 +85,53 @@ def update():
 
     signal_source.data = dict(x=x_data, y=signal_y_data)
 
-    status_bar_source = get_current_status()
+    #status_bar_source.data = get_current_status()
 
+
+def update_status():
+    # A slower update component for less frequent data
+    status_bar_source.data = get_current_status()
 
 # Code for the FFT plot
 fft_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
                      y_axis_type="linear", y_range=[0,200], title="FFT of Audio Capture",
-                     x_axis_label='Freq',x_range=[0,512], y_axis_label='Levels', plot_width=800, plot_height=400)
+                     x_axis_label='Freq',x_range=[0,512], y_axis_label='Levels', plot_width=800, plot_height=300)
 
 # Code for the signal plot
 signal_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
                      y_axis_type="linear", y_range=[-0.8, 0.8], title="Signal diagram of Audio Capture",
-                     x_axis_label='Freq',x_range=[0,512], y_axis_label='Levels', plot_width=500, plot_height=400)
+                     x_axis_label='Freq',x_range=[0,512], y_axis_label='Levels', plot_width=500, plot_height=300)
 
+# Code for the status plot
 status_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
-                     y_axis_type="linear", y_range=[0,200], title="Status",
-                     x_axis_label='Freq',x_range=[0,512], y_axis_label='Levels', plot_width=500, plot_height=400)
+                     y_axis_type="linear", y_range=[0,1], title="Status",
+                     x_axis_label='Freq',x_range=[0,50], y_axis_label='Detected Conversations', plot_width=1300, plot_height=150)
+
+# Code for controls
+window_size = Slider(title="Moving Window Size for ML", value=500, start=10.0, end=10000.0, step=1)
+simul_signal_size = Slider(title="Simultaneous Signal allowance for ML", value=3, start=1, end=25, step=1)
+random_morse_size = Slider(title="Number of Morse signals generated", value=3, start=1, end=25.0, step=1)
+
+# Code for line and glyph generation
 
 fft_plot.line(x='x', y='y', source=fft_source)
 signal_plot.line(x='x', y='y', source=signal_source)
-status_plot.line(x='x', y='y', source=signal_source)
 
-audio_row = row(fft_plot, signal_plot, width=5000)
+glyph = Text(x="x", y="y", text="text", text_color="#96deb3")
+status_plot.add_glyph(status_bar_source, glyph)
 
-layout = column(audio_row, status_plot)
+
+"""
+Final Layout and Callback generation
+"""
+
+
+audio_row = row(fft_plot, signal_plot, width=1500)
+inputs = row(window_size, simul_signal_size, random_morse_size)
+first_block = column(audio_row, status_plot, inputs)
+layout = first_block
 
 curdoc().add_root(layout)
 curdoc().add_periodic_callback(update, 100)
+curdoc().add_periodic_callback(update_status, 2000)
 curdoc().title = "Radio Spectrum Prediction"
