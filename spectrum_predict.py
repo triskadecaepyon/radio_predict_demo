@@ -9,7 +9,8 @@ from bokeh.plotting import curdoc, figure
 
 """
 Simulated Signal generation
-Code section from the example at https://github.com/bokeh/bokeh/tree/master/examples/app/spectrogram
+Code section partially from the example at
+https://github.com/bokeh/bokeh/tree/master/examples/app/spectrogram
 """
 
 
@@ -38,9 +39,17 @@ def make_audio():
     _ind_mod = max([_ind_mod+np.random.randn()*0.1, 0])
     A = 0.4 + 0.05 * np.random.random()
     signal = A * fm_modulation(_t, _f_carrier, _f_mod, _ind_mod)
+    return signal
+
+
+def create_signal_fft(signal):
     ffts = fft(signal)
     spectrum = abs(ffts)[:int(NUM_SAMPLES/2)]
     return spectrum
+
+
+def get_current_status():
+    return None
 
 
 """
@@ -48,20 +57,45 @@ Plot Generation
 """
 
 signal_source = ColumnDataSource(data=dict(x=[], y=[]))
+fft_source = ColumnDataSource(data=dict(x=[], y=[]))
+status_bar_source = ColumnDataSource(data=dict(x=[], y=[], text=[]))
 
 def update():
     signal_data = make_audio()
+    fft_data = create_signal_fft(signal_data)
     x_data = [x for x in range(0,512)]
-    y_data = signal_data.reshape(512,1).tolist()
-    signal_source.data = dict(x=x_data, y=y_data)
-    #print(y_data)
+    y_data = fft_data.reshape(512,1).tolist()
 
-signal_plot = figure(tools="pan,box_zoom,reset,save",
+    fft_source.data = dict(x=x_data, y=y_data)
+    signal_y_data = signal_data[::2].reshape(512,1).tolist()
+
+    signal_source.data = dict(x=x_data, y=signal_y_data)
+
+    status_bar_source = get_current_status()
+
+
+# Code for the FFT plot
+fft_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
                      y_axis_type="linear", y_range=[0,200], title="FFT of Audio Capture",
-                     x_axis_label='Freq',x_range=[0,512], y_axis_label='Levels', plot_width=900, plot_height=700)
+                     x_axis_label='Freq',x_range=[0,512], y_axis_label='Levels', plot_width=800, plot_height=400)
 
+# Code for the signal plot
+signal_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
+                     y_axis_type="linear", y_range=[-0.8, 0.8], title="Signal diagram of Audio Capture",
+                     x_axis_label='Freq',x_range=[0,512], y_axis_label='Levels', plot_width=500, plot_height=400)
+
+status_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
+                     y_axis_type="linear", y_range=[0,200], title="Status",
+                     x_axis_label='Freq',x_range=[0,512], y_axis_label='Levels', plot_width=500, plot_height=400)
+
+fft_plot.line(x='x', y='y', source=fft_source)
 signal_plot.line(x='x', y='y', source=signal_source)
+status_plot.line(x='x', y='y', source=signal_source)
 
-curdoc().add_root(row(signal_plot, width=5000))
+audio_row = row(fft_plot, signal_plot, width=5000)
+
+layout = column(audio_row, status_plot)
+
+curdoc().add_root(layout)
 curdoc().add_periodic_callback(update, 100)
-curdoc().title = "Test_Stream"
+curdoc().title = "Radio Spectrum Prediction"
