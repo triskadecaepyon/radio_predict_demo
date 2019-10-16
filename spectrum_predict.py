@@ -67,12 +67,13 @@ def get_current_status():
     return dict(x=x_data, y=y_data, text=text_data)
 
 """
-Plot Generation
+Data Generation
 """
 
 signal_source = ColumnDataSource(data=dict(x=[], y=[]))
 fft_source = ColumnDataSource(data=dict(x=[], y=[]))
 status_bar_source = ColumnDataSource(data=dict(x=[], y=[], text=[]))
+
 
 def update():
     signal_data = make_audio()
@@ -87,10 +88,32 @@ def update():
 
     #status_bar_source.data = get_current_status()
 
-
+    
 def update_status():
     # A slower update component for less frequent data
     status_bar_source.data = get_current_status()
+
+
+"""
+Control Code, Sliders, and Interactivity
+"""
+
+
+window_size = Slider(title="Time Window Size (~1000 is 1 second) ", value=500, start=10.0, end=10000.0, step=1)
+simul_signal_size = Slider(title="Simultaneous Signal allowance for ML", value=3, start=1, end=25, step=1)
+random_morse_size = Slider(title="Number of Morse signals generated", value=3, start=1, end=25.0, step=1)
+
+def update_data(attrname, old, new):
+
+    print(window_size.value, simul_signal_size.value, random_morse_size.value)
+
+for sliders in [window_size, simul_signal_size, random_morse_size]:
+        sliders.on_change('value', update_data)
+
+
+"""
+Plotting Code
+"""
 
 # Code for the FFT plot
 fft_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
@@ -106,11 +129,6 @@ signal_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
 status_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
                      y_axis_type="linear", y_range=[0,1], title="Status",
                      x_axis_label='Freq',x_range=[0,50], y_axis_label='Detected Conversations', plot_width=1300, plot_height=150)
-
-# Code for controls
-window_size = Slider(title="Moving Window Size for ML", value=500, start=10.0, end=10000.0, step=1)
-simul_signal_size = Slider(title="Simultaneous Signal allowance for ML", value=3, start=1, end=25, step=1)
-random_morse_size = Slider(title="Number of Morse signals generated", value=3, start=1, end=25.0, step=1)
 
 # Code for line and glyph generation
 
