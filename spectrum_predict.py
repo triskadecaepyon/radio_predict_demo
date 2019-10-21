@@ -56,6 +56,16 @@ def update_data(attrname, old, new):
     print(window_size.value, simul_signal_size.value, random_morse_size.value)
 
 
+def update_ml():
+
+    print("running ML")
+    if signal_window_data.shape[0] != window_size.value:
+        print("different size")
+        signal_window_data.resize(window_size.value,512)
+
+    print(signal_window_data)
+    print(signal_window_data.shape)
+
 """
 Bokeh Streaming Sources
 """
@@ -63,7 +73,9 @@ Bokeh Streaming Sources
 signal_source = ColumnDataSource(data=dict(x=[], y=[]))
 fft_source = ColumnDataSource(data=dict(x=[], y=[]))
 status_bar_source = ColumnDataSource(data=dict(x=[], y=[], text=[]))
+signal_window_data = np.zeros([500,512])
 
+#signal_window_data = np.zeros([1000,100])
 
 """
 Bokeh Plotting Code
@@ -132,4 +144,5 @@ layout = first_block
 curdoc().add_root(layout)
 curdoc().add_periodic_callback(update, 100)
 curdoc().add_periodic_callback(update_status, 2000)
+curdoc().add_periodic_callback(update_ml, 2000)
 curdoc().title = "Radio Spectrum Prediction"
