@@ -7,6 +7,7 @@ from bokeh.models import ColumnDataSource, Slider, Select
 from bokeh.models.glyphs import Text
 from bokeh.models.widgets import Slider, TextInput
 from bokeh.plotting import curdoc, figure
+from bokeh.driving import count
 
 import ml_model
 from ham_audio import make_audio, create_signal_fft, fm_modulation
@@ -15,6 +16,15 @@ from ham_audio import make_audio, create_signal_fft, fm_modulation
 """
 General functions
 """
+
+
+def mv_window_add(np_array, data, index):
+    np_array[index] = data
+
+
+def mv_window_view(np_array, index):
+    return np.roll(np_array, index)
+
 
 def get_current_status():
     # Random Data for now
@@ -32,8 +42,8 @@ def get_current_status():
 
     return dict(x=x_data, y=y_data, text=text_data)
 
-
-def update():
+@count()
+def update(t):
     signal_data = make_audio()
     fft_data = create_signal_fft(signal_data)
     x_data = [x for x in range(0,512)]
@@ -41,6 +51,11 @@ def update():
 
     fft_source.data = dict(x=x_data, y=y_data)
     signal_y_data = signal_data[::2].reshape(512,1).tolist()
+
+    # Writing to window data, test code that it works for now
+    mv_window_add(signal_window_data,fft_data,t % 500)
+    ref_index = t % 500
+    #print(signal_window_data, ref_index)
 
     signal_source.data = dict(x=x_data, y=signal_y_data)
 
@@ -63,8 +78,9 @@ def update_ml():
         print("different size")
         signal_window_data.resize(window_size.value,512)
 
-    print(signal_window_data)
-    print(signal_window_data.shape)
+    #print(signal_window_data)
+   # print(signal_window_data.shape)
+
 
 """
 Bokeh Streaming Sources
@@ -74,6 +90,7 @@ signal_source = ColumnDataSource(data=dict(x=[], y=[]))
 fft_source = ColumnDataSource(data=dict(x=[], y=[]))
 status_bar_source = ColumnDataSource(data=dict(x=[], y=[], text=[]))
 signal_window_data = np.zeros([500,512])
+ref_index = 0
 
 #signal_window_data = np.zeros([1000,100])
 
