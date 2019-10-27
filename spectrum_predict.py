@@ -52,11 +52,9 @@ def update(t):
     fft_source.data = dict(x=x_data, y=y_data)
     signal_y_data = signal_data[::2].reshape(512,1).tolist()
 
-    # Writing to window data, test code that it works for now
     mv_window_add(signal_window_data,fft_data,t % 500)
-    ref_index = t % 500
-    #print(signal_window_data, ref_index)
-
+    ref_index = t % 500 # Use the modulo for a wrapping index
+    window_source.data = dict(index=[ref_index])
     signal_source.data = dict(x=x_data, y=signal_y_data)
 
 
@@ -79,7 +77,10 @@ def update_ml():
         signal_window_data.resize(window_size.value,512)
 
     #print(signal_window_data)
-   # print(signal_window_data.shape)
+    #print(window_source.data['index'])
+    #print(signal_window_data.shape)
+    for_ml = mv_window_view(signal_window_data, window_source.data['index'])
+    print(for_ml)
 
 
 """
@@ -89,6 +90,7 @@ Bokeh Streaming Sources
 signal_source = ColumnDataSource(data=dict(x=[], y=[]))
 fft_source = ColumnDataSource(data=dict(x=[], y=[]))
 status_bar_source = ColumnDataSource(data=dict(x=[], y=[], text=[]))
+window_source = ColumnDataSource(data=dict(index=[]))
 signal_window_data = np.zeros([500,512])
 ref_index = 0
 
