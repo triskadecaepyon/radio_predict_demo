@@ -10,7 +10,7 @@ from bokeh.plotting import curdoc, figure
 from bokeh.driving import count
 
 import ml_model
-from ham_audio import make_audio, create_signal_fft, fm_modulation
+from ham_audio import make_audio, create_signal_fft, fm_modulation, process_spectrum
 
 
 """
@@ -76,11 +76,9 @@ def update_ml():
         print("different size")
         signal_window_data.resize(window_size.value,512)
 
-    #print(signal_window_data)
-    #print(window_source.data['index'])
     #print(signal_window_data.shape)
+    process_spectrum(signal_window_data, 10)
     for_ml = mv_window_view(signal_window_data, window_source.data['index'])
-    print(for_ml)
 
 
 """

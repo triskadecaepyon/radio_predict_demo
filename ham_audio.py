@@ -41,3 +41,38 @@ def create_signal_fft(signal):
     ffts = fft(signal)
     spectrum = abs(ffts)[:int(NUM_SAMPLES/2)]
     return spectrum
+
+
+"""
+Code to process spectrum and morse
+from hamradio-toolkit
+"""
+
+def detect_signals(signal, threshold):
+    """
+    Detect signals and return the offset frequencies
+    Uses a max signal threshold via np.max() to identify
+    all the spectrum carrier freq. getting signals in the
+    spectrogram
+    Input: Post-fft Signal, and db threshold
+    Output: List of detected signals by carrier freq, array mask
+    """
+    list_of_bool_offsets = signal.max(0) > threshold
+    return list_of_bool_offsets
+
+
+def process_carrier_data(signal, offset_mask):
+    """
+    
+    """
+
+
+def process_spectrum(signal, threshold):
+    """
+    Process Spectrum of Windowed Signal Data
+    Input: Window spectrum data, Post-FFT
+    Output: 
+    """
+    mask_list_of_offsets = detect_signals(signal, threshold)
+    return mask_list_of_offsets
+
