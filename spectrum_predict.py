@@ -23,7 +23,7 @@ def mv_window_add(np_array, data, index):
 
 
 def mv_window_view(np_array, index):
-    return np.roll(np_array, index)
+    return np.roll(np_array, index*512)
 
 
 def get_current_status():
@@ -77,9 +77,10 @@ def update_ml():
         signal_window_data.resize(window_size.value,512)
 
     #print(signal_window_data.shape)
-    process_spectrum(signal_window_data, 10)
+    
     for_ml = mv_window_view(signal_window_data, window_source.data['index'])
-
+    mask, data = process_spectrum(for_ml, 10)
+    #print(mask)
 
 """
 Bokeh Streaming Sources
