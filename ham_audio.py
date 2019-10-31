@@ -70,7 +70,7 @@ def process_carrier_data(signal, offset_mask):
     For now, just a simple selection, but
     this is where to inject ML and classifiers
     """
-    return np.delete(signal, np.where(np.invert(offset_mask == True)),axis=1)
+    return np.delete(signal, np.where(offset_mask == False),axis=1)
     
 
 
@@ -81,7 +81,7 @@ def process_spectrum(signal, threshold):
     Output: 
     """
     mask_list_of_offsets = detect_signals(signal, threshold)
-    print(mask_list_of_offsets)
+    #print(mask_list_of_offsets)
     array_to_process = process_carrier_data(signal, mask_list_of_offsets)
     return mask_list_of_offsets, array_to_process
 

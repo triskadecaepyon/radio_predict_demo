@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import time
 
 from bokeh.io import curdoc
 from bokeh.layouts import row, column, gridplot
@@ -9,9 +10,8 @@ from bokeh.models.widgets import Slider, TextInput
 from bokeh.plotting import curdoc, figure
 from bokeh.driving import count
 
-import ml_model
 from ham_audio import make_audio, create_signal_fft, fm_modulation, process_spectrum
-
+from ml_model import train_simple_model
 
 """
 General functions
@@ -64,7 +64,10 @@ def update_status():
 
 
 def update_data(attrname, old, new):
-
+    """
+    An update callback for the controls changes if
+    sliders are moved.
+    """
     # Placeholder for now
     print(window_size.value, simul_signal_size.value, random_morse_size.value)
 
@@ -78,9 +81,19 @@ def update_ml():
 
     #print(signal_window_data.shape)
     
+    start_processing_time = time.time()
     for_ml = mv_window_view(signal_window_data, window_source.data['index'])
-    mask, data = process_spectrum(for_ml, 10)
-    #print(mask)
+    mask, target_data = process_spectrum(for_ml, 10)
+    total_proc_time = time.time() - start_processing_time
+    print("Total Signal Processing time: ",total_proc_time)
+
+    start_ml_time = time.time()
+    model = train_simple_model(for_ml, mask)
+    total_ml_time = time.time() - start_ml_time
+    print("Total ML Training time: ", total_ml_time)
+
+    time_source.data = dict(time1=[total_proc_time],time2=[total_ml_time],y=[1])
+    
 
 """
 Bokeh Streaming Sources
@@ -90,6 +103,7 @@ signal_source = ColumnDataSource(data=dict(x=[], y=[]))
 fft_source = ColumnDataSource(data=dict(x=[], y=[]))
 status_bar_source = ColumnDataSource(data=dict(x=[], y=[], text=[]))
 window_source = ColumnDataSource(data=dict(index=[]))
+time_source = ColumnDataSource(data=dict(time1=[],time2=[],y=[]))
 signal_window_data = np.zeros([500,512])
 ref_index = 0
 
@@ -120,14 +134,21 @@ status_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
                      y_axis_label='Detected Conversations',
                      plot_width=1300, plot_height=150)
 
+# Code for the ML plot
+ml_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
+                 x_range=[0,4], y_range=[0,2], plot_height=250,
+                 x_axis_label='Time (s)',y_axis_label='Total Task',
+                 title="Machine Learning (Training) and Signal Processing Time")
+
+
 
 """
 Control Code, Sliders, and Interactivity
 """
 
 
-window_size = Slider(title="Time Window Size (~1000 is 1 second) ", value=500,
-                     start=10.0, end=10000.0, step=1)
+window_size = Slider(title="Time Window Size (~1000 is 1 second) ", value=1000,
+                     start=1000.0, end=100000.0, step=1)
 simul_signal_size = Slider(title="Simultaneous Signal allowance for ML",
                            value=3, start=1, end=25, step=1)
 random_morse_size = Slider(title="Number of Morse signals generated", value=3,
@@ -140,6 +161,9 @@ Code for line and glyph generation
 
 fft_plot.line(x='x', y='y', source=fft_source)
 signal_plot.line(x='x', y='y', source=signal_source)
+
+ml_plot.hbar_stack(['time1', 'time2'], y='y', height=1, color=("grey", "orange"), source=time_source)
+
 
 glyph = Text(x="x", y="y", text="text", text_color="#96deb3")
 status_plot.add_glyph(status_bar_source, glyph)
@@ -156,7 +180,8 @@ for sliders in [window_size, simul_signal_size, random_morse_size]:
 
 audio_row = row(fft_plot, signal_plot, width=1500)
 inputs = row(window_size, simul_signal_size, random_morse_size)
-first_block = column(audio_row, status_plot, inputs)
+ml_row = row(ml_plot)
+first_block = column(ml_plot,inputs, audio_row, status_plot)
 layout = first_block
 
 curdoc().add_root(layout)
