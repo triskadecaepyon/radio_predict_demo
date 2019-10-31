@@ -162,7 +162,7 @@ Code for line and glyph generation
 fft_plot.line(x='x', y='y', source=fft_source)
 signal_plot.line(x='x', y='y', source=signal_source)
 
-ml_plot.hbar_stack(['time1', 'time2'], y='y', height=1, color=("grey", "orange"), source=time_source)
+ml_plot.hbar_stack(['time1', 'time2'], y='y', height=1, color=("grey", "orange"), legend="ML (SVC) Time",source=time_source)
 
 
 glyph = Text(x="x", y="y", text="text", text_color="#96deb3")
