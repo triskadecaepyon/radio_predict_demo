@@ -81,7 +81,6 @@ def process_spectrum(signal, threshold):
     Output: 
     """
     mask_list_of_offsets = detect_signals(signal, threshold)
-    #print(mask_list_of_offsets)
     array_to_process = process_carrier_data(signal, mask_list_of_offsets)
     return mask_list_of_offsets, array_to_process
 

@@ -20,16 +20,26 @@ General functions
 
 
 def mv_window_add(np_array, data, index):
+    """
+    A small helper function for the rolling index array
+    """
     np_array[index] = data
 
 
 def mv_window_view(np_array, index):
+    """
+    A small helper function to rearrange the array
+    for the row index that was last written such that
+    it is time-aligned.
+    """
     return np.roll(np_array, index*512)
 
 
 def get_current_status():
-    # Random Data for now
 
+    # TODO: Make this actually align with detected signals
+    # Random Data for now
+    
     # List of some real and some generated call signs
     ls_of_conv_callsigns = ['k5xrs','ki5ddl','k5gnu','k5pi','ae1x',
                             'n5nm','k5aes','k3nem']
@@ -45,6 +55,14 @@ def get_current_status():
 
 @count()
 def update(t):
+    """
+    The main update periodic callback.  Generates the audio
+    signal, runs the fft, and saves the data to the 
+    streaming ColumnDataSources for Bokeh.  Note the use of
+    the @count decorator to run the modulo for the window
+    index.
+    """
+    
     signal_data = make_audio()
     fft_data = create_signal_fft(signal_data)
     x_data = [x for x in range(0,512)]
@@ -60,6 +78,10 @@ def update(t):
 
 
 def update_status():
+    """
+    Utilized for slower updates for the detected
+    window code.  
+    """
     # A slower update component for less frequent data
     status_bar_source.data = get_current_status()
 
@@ -69,18 +91,25 @@ def update_data(attrname, old, new):
     An update callback for the controls changes if
     sliders are moved.
     """
-    # Placeholder for now
+    # Print out when any of the variables change.
     print(window_size.value, simul_signal_size.value, random_morse_size.value)
 
 
 def update_ml():
+    """
+    Update system for the Machine Learning task. 
+    Uses the last user-defined time window to put into
+    the training or inference tasks.  
+    Time.time() is used to timestamp the duration of
+    different tasks.  Please note these calls are blocking,
+    so the longer the task the more interruptions there are to 
+    the main window.
+    """
 
     print("running ML")
     if signal_window_data.shape[0] != window_size.value:
         print("different size")
         signal_window_data.resize(window_size.value,512)
-
-    #print(signal_window_data.shape)
     
     start_processing_time = time.time()
     for_ml = mv_window_view(signal_window_data, window_source.data['index'])
