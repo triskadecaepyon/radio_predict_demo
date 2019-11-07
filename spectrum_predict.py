@@ -10,7 +10,8 @@ from bokeh.models.widgets import Slider, TextInput
 from bokeh.plotting import curdoc, figure
 from bokeh.driving import count
 
-from ham_audio import make_audio, create_signal_fft, fm_modulation, process_spectrum
+from ham_audio import make_audio, create_signal_fft, fm_modulation
+from ham_audio import process_spectrum
 from ml_model import train_simple_model
 
 """
@@ -107,7 +108,6 @@ time_source = ColumnDataSource(data=dict(time1=[],time2=[],y=[]))
 signal_window_data = np.zeros([500,512])
 ref_index = 0
 
-#signal_window_data = np.zeros([1000,100])
 
 """
 Bokeh Plotting Code
@@ -124,7 +124,8 @@ fft_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
 signal_plot = figure(tools="pan,wheel_zoom,box_zoom,reset,save",
                      y_axis_type="linear", y_range=[-0.8, 0.8],
                      title="Signal diagram of Audio Capture",
-                     x_axis_label='Freq', x_range=[0,512], y_axis_label='Levels',
+                     x_axis_label='Freq', x_range=[0,512],
+                     y_axis_label='Levels',
                      plot_width=500, plot_height=300)
 
 # Code for the status plot
@@ -162,8 +163,8 @@ Code for line and glyph generation
 fft_plot.line(x='x', y='y', source=fft_source)
 signal_plot.line(x='x', y='y', source=signal_source)
 
-ml_plot.hbar_stack(['time1', 'time2'], y='y', height=1, color=("grey", "orange"), legend="ML (SVC) Time",source=time_source)
-
+ml_plot.hbar_stack(['time1', 'time2'], y='y', height=1, color=("grey", "orange"),
+                   legend="ML (SVC) Time",source=time_source)
 
 glyph = Text(x="x", y="y", text="text", text_color="#96deb3")
 status_plot.add_glyph(status_bar_source, glyph)
